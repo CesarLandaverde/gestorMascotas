@@ -8,7 +8,7 @@ const Welcome = ()=>{
     const navigate = useNavigate();
     const handleAcepted = ()=>{
         setShowWelcome(false);
-        navigate("/home")
+        navigate("/mascotas");
     };
 
     if (!showWelcome) return null;
@@ -22,7 +22,7 @@ const Welcome = ()=>{
 
     <p className="mb-6 text-gray-700">¡Gracias por confiar en nosotros!</p>
 
-    <Button type="button" onclick={handleAcepted} text="Ingresar" />
+    <Button type="button" onClick={handleAcepted} text="Ingresar" />
   </div>
 </div>
     );

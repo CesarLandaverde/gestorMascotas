@@ -1,7 +1,7 @@
-const Button=({onclick,type,text})  =>{
+const Button=({onClick,type,text})  =>{
 return (
 <button type={type}
-onclick={onclick}
+onClick={onClick}
 className="bg-lime-700 text-lg text-white font-bold hover:bg-lime-900 rounded-xl py-3 px-5">
     {text}
     

@@ -1,106 +1,80 @@
-import { useEffect } from "react";
-import { url } from "../../utils/apiUrl"; // URL de la API
-import { toast } from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
-import useFetchUser from "./useFetchUsers";
+import { toast } from "react-hot-toast";
+import { useForm } from "react-hook-form";
+import useFetchMascotas from "./useFetchMascota";
 
-const useDataMascota = (methods) => {
-  const { getUserById, getUsers } = useFetchUser();
+const useDataMascota = () => {
+  const navigate = useNavigate();
   const { id } = useParams();
+  const { 
+    getMascotaById, 
+    createMascota, 
+    updateMascota,
+    loading 
+  } = useFetchMascotas();
+  
+  const methods = useForm({
+    defaultValues: {
+      mascota: "",
+      edad: "",
+      raza: "",
+      especie: "",
+      propietario: ""
+    }
+  });
 
-  const {
-    register,
-    handleSubmit,
+  const { 
+    register, 
+    handleSubmit, 
+    formState: { errors }, 
     reset,
-    formState: { errors },
+    setValue
   } = methods;
 
-  const navigate = useNavigate();
-
-  const saveMascota = async (dataForm) => {
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(dataForm),
-      });
-
-      if (!response.ok) {
-        toast.error("No se pudo agregar la mascota");
-        throw new Error("Error al guardar");
-      }
-
-      toast.success("Mascota guardada con éxito");
-      navigate("/home");
-    } catch (error) {
-      console.log("Error:", error);
-    } finally {
-      reset();
-      getUsers();
-    }
-  };
-
-  const editMascota = async (dataForm) => {
-    try {
-      const response = await fetch(`${url}/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(dataForm),
-      });
-
-      if (!response.ok) {
-        toast.error("No se pudo actualizar la mascota");
-        throw new Error("Error al actualizar");
-      }
-
-      toast.success("Mascota actualizada con éxito");
-      navigate("/home");
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      reset();
-      getUsers();
-    }
-  };
-
-  const handleMascotaAction = (dataForm) => {
-    if (id) {
-      editMascota(dataForm);
-    } else {
-      saveMascota(dataForm);
-    }
-  };
-
-  const handleUpdateMascota = (id) => {
-    navigate(`/users/${id}`);
-  };
-
   const loadMascota = async () => {
-    if (id) {
-      const mascota = await getUserById(id);
+    if (!id) return;
+    
+    try {
+      const mascota = await getMascotaById(id);
       if (mascota) {
-        reset({
-          edad: mascota?.edad,
-          raza: mascota?.raza,
-          especie: mascota?.especie,
-          mascota: mascota?.mascota,
-          propietario: mascota?.propietario,
+        // Establece los valores del formulario
+        Object.entries(mascota).forEach(([key, value]) => {
+          setValue(key, value);
         });
       }
+    } catch (error) {
+      toast.error("Error al cargar los datos de la mascota");
+      console.error("Error loading pet data:", error);
     }
   };
 
-  useEffect(() => {
-    loadMascota();
-  }, [id]);
+  const onSubmit = async (formData) => {
+    try {
+      if (id) {
+        // Modo edición
+        await updateMascota(id, formData);
+        toast.success("Mascota actualizada correctamente");
+      } else {
+        // Modo creación
+        await createMascota(formData);
+        toast.success("Mascota creada correctamente");
+      }
+      navigate("/mascotas"); // Redirige a la lista de mascotas
+    } catch (error) {
+      toast.error("Error al guardar los datos");
+      console.error("Error saving pet:", error);
+    }
+  };
 
   return {
     register,
-    handleSubmit: handleSubmit(handleMascotaAction),
+    handleSubmit,
     errors,
-    getUserById,
-    handleUpdateMascota,
+    loading,
     loadMascota,
+    onSubmit,
+    reset,
+    methods
   };
 };
 
